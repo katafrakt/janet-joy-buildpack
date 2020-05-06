@@ -1,0 +1,50 @@
+#!/bin/bash
+
+set -o errexit    # always exit on error
+set -o pipefail   # don't ignore exit codes when piping output
+
+BUILD_DIR=${1:-}
+CACHE_DIR=${2:-}
+ENV_DIR=${3:-}
+
+BIN_DIR=$(cd $(dirname $0); pwd)
+BUILDPACK_DIR=$(dirname $BIN_DIR)
+
+JANET_VERSION=1.8.1
+JANET_ARCHIVE_NAME=janet-v$JANET_VERSION-linux
+JANET_URL=https://github.com/janet-lang/janet/releases/download/v$JANET_VERSION/$JANET_ARCHIVE_NAME.tar.gz
+
+JANET_DIR_NAME=$BUILD_DIR/.janet_bin
+export JANET_PATH=$CACHE_DIR/.janet
+export JANET_HEADERPATH=$JANET_DIR_NAME
+export JANET_LIBPATH=$JANET_DIR_NAME
+export JANET_BINPATH=$JANET_DIR_NAME
+export PATH=$JANET_DIR_NAME:$PATH
+
+echo "Downloading $JANET_URL"
+curl -LJs $JANET_URL | tar xz
+mv $JANET_ARCHIVE_NAME $JANET_DIR_NAME
+
+mkdir -p "$JANET_PATH"
+cd $BUILD_DIR && jpm clear-cache && jpm deps && cd -
+
+cp -r $JANET_PATH $BUILD_DIR/.janet
+
+PROFILE_DIR=.profile.d
+mkdir -p $1/$PROFILE_DIR
+
+cat << EOF > $1/$PROFILE_DIR/setup_janet.sh
+export PATH=.janet_bin:\$PATH
+janet_bin_path=\$(pwd)/.janet_bin
+export JANET_HEADERPATH=\$janet_bin_path
+export JANET_LIBPATH=\$janet_bin_path
+export JANET_BINPATH=\$janet_bin_path
+janet_dir=\$(pwd)/.janet
+export JANET_PATH=\$janet_dir
+EOF
+
+cat << EOF > $1/$PROFILE_DIR/setup_joy.sh
+echo 'JOY_ENV=production' >> .env
+EOF
+
+cat $1/$PROFILE_DIR/setup_janet.sh
