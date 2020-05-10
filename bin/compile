@@ -45,6 +45,7 @@ EOF
 
 cat << EOF > $1/$PROFILE_DIR/setup_joy.sh
 echo 'JOY_ENV=production' >> .env
+joy migrate
 EOF
 
 cat $1/$PROFILE_DIR/setup_janet.sh
