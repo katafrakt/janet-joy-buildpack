@@ -26,7 +26,7 @@ curl -LJs $JANET_URL | tar xz
 mv $JANET_ARCHIVE_NAME $JANET_DIR_NAME
 
 mkdir -p "$JANET_PATH"
-cd $BUILD_DIR && jpm clear-cache && jpm deps && cd -
+cd $BUILD_DIR && jpm --verbose deps && cd -
 
 cp -r $JANET_PATH $BUILD_DIR/.janet
 
@@ -34,7 +34,7 @@ PROFILE_DIR=.profile.d
 mkdir -p $1/$PROFILE_DIR
 
 cat << EOF > $1/$PROFILE_DIR/setup_janet.sh
-export PATH=.janet_bin:\$PATH
+export PATH=/app/.janet_bin:\$PATH
 janet_bin_path=\$(pwd)/.janet_bin
 export JANET_HEADERPATH=\$janet_bin_path
 export JANET_LIBPATH=\$janet_bin_path
