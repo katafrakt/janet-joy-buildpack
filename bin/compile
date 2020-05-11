@@ -10,7 +10,7 @@ ENV_DIR=${3:-}
 BIN_DIR=$(cd $(dirname $0); pwd)
 BUILDPACK_DIR=$(dirname $BIN_DIR)
 
-JANET_VERSION=1.8.1
+JANET_VERSION=1.9.0
 JANET_ARCHIVE_NAME=janet-v$JANET_VERSION-linux
 JANET_URL=https://github.com/janet-lang/janet/releases/download/v$JANET_VERSION/$JANET_ARCHIVE_NAME.tar.gz
 
