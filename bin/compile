@@ -14,6 +14,28 @@ JANET_VERSION=1.9.0
 JANET_ARCHIVE_NAME=janet-v$JANET_VERSION-linux
 JANET_URL=https://github.com/janet-lang/janet/releases/download/v$JANET_VERSION/$JANET_ARCHIVE_NAME.tar.gz
 
+# Need to upgrade curl if we want to make use of jurl
+CURL_VERSION=7.70.0
+DOWNLOAD_URL="https://curl.haxx.se/download/curl-$CURL_VERSION.tar.xz"
+curl -sL "$DOWNLOAD_URL" > curl_$CURL_VERSION.tar.xz
+tar -xf curl_$CURL_VERSION.tar.xz
+pushd curl-$CURL_VERSION
+./configure --prefix=$BUILD_DIR/vendor --with-ssl
+make
+make install
+popd
+
+export LD_LIBRARY_PATH="$BUILD_DIR/vendor/lib/x86_64-linux-gnu:$BUILD_DIR/vendor/lib/i386-linux-gnu:$BUILD_DIR/vendor/lib:\$LD_LIBRARY_PATH"
+export LIBRARY_PATH="$BUILD_DIR/vendor/lib/x86_64-linux-gnu:$BUILD_DIR/vendor/lib/i386-linux-gnu:$BUILD_DIR/vendor/lib:\$LIBRARY_PATH"
+export INCLUDE_PATH="$BUILD_DIR/vendor/include:$BUILD_DIR/vendor/include/x86_64-linux-gnu:\$INCLUDE_PATH"
+export CPATH="\$INCLUDE_PATH"
+export CPPPATH="\$INCLUDE_PATH"
+export PKG_CONFIG_PATH="$BUILD_DIR/vendor/lib/x86_64-linux-gnu/pkgconfig:$BUILD_DIR/vendor/lib/i386-linux-gnu/pkgconfig:$BUILD_DIR/vendor/lib/pkgconfig:\$PKG_CONFIG_PATH"
+
+echo "##########"
+pkg-config libcurl --cflags
+pkg-config libcurl --libs
+
 JANET_DIR_NAME=$BUILD_DIR/.janet_bin
 export JANET_PATH=$CACHE_DIR/.janet
 export JANET_HEADERPATH=$JANET_DIR_NAME
@@ -26,8 +48,9 @@ curl -LJs $JANET_URL | tar xz
 mv $JANET_ARCHIVE_NAME $JANET_DIR_NAME
 
 mkdir -p "$JANET_PATH"
-cd $BUILD_DIR && jpm --verbose deps && cd -
+cd $BUILD_DIR && jpm --verbose load-lockfile && cd -
 
+echo "Copying Janet files"
 cp -r $JANET_PATH $BUILD_DIR/.janet
 
 PROFILE_DIR=.profile.d
@@ -41,6 +64,7 @@ export JANET_LIBPATH=\$janet_bin_path
 export JANET_BINPATH=\$janet_bin_path
 janet_dir=\$(pwd)/.janet
 export JANET_PATH=\$janet_dir
+export LD_LIBRARY_PATH=/app/vendor/lib:\$LD_LIBRARY_PATH
 EOF
 
 cat << EOF > $1/$PROFILE_DIR/setup_joy.sh
@@ -48,4 +72,4 @@ echo 'JOY_ENV=production' >> .env
 joy migrate
 EOF
 
-cat $1/$PROFILE_DIR/setup_janet.sh
+curl --version
